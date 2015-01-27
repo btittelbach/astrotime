@@ -33,17 +33,17 @@ var (
 	SYDNEY = location{
 		timezone:  "Australia/Sydney",
 		latitude:  -33.86,
-		longitude: -151.20,
+		longitude: 151.20,
 	}
 	STOCKHOLM = location{
 		timezone:  "Europe/Stockholm",
 		latitude:  59.33,
-		longitude: -18.067,
+		longitude: 18.067,
 	}
 	NEWYORK = location{
 		timezone:  "America/New_York",
 		latitude:  40.642,
-		longitude: 74.017,
+		longitude: -74.017,
 	}
 	NOVEMBER = "2014-11-01"
 	JULY     = "2015-07-01"
