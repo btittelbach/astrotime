@@ -1,27 +1,24 @@
-astrotime
-=========
+# astrotime
+
 
 NOAA astrological algorithms for sunrise and sunset ported to Go
 
 
-FUNCTIONS:
+## Functions
 
-// CalcSunrise calculates the sunrise, in local time, on the day t at the  
-// location specified in longitude and latitude.  
-func CalcSunrise(t time.Time, latitude float64, longitude float64) time.Time  
-
-// NextSunrise returns date/time of the next sunrise after tAfter  
-func NextSunrise(tAfter time.Time, latitude float64, longitude float64) (tSunrise time.Time)  
-
-// CalcSunset calculates the sunset, in local time,  on the day t at the  
-// location specified in longitude and latitude.  
-func CalcSunset(t time.Time, latitude float64, longitude float64) time.Time  
-
-// NextSunset returns date/time of the next sunset after tAfter  
-func NextSunset(tAfter time.Time, latitude float64, longitude float64) (tSunset time.Time)  
+- `func CalcSunrise(t time.Time, latitude float64, longitude float64) time.Time` calculates the sunrise, in local time, on the day t at the location specified in longitude and latitude.  
+- `func NextSunrise(tAfter time.Time, latitude float64, longitude float64) (tSunrise time.Time)` returns date/time of the next sunrise after tAfter  
+- `func CalcSunset(t time.Time, latitude float64, longitude float64) time.Time` calculates the sunset, in local time,  on the day t at the location specified in longitude and latitude.  
+- `func NextSunset(tAfter time.Time, latitude float64, longitude float64) (tSunset time.Time)` returns date/time of the next sunset after tAfter  
 
 
-EXAMPLE:
+## Install
+
+``` sh
+go get -u github.com/0rph3us/astrotime
+```
+
+## Example
 
 ```go
 package main
