@@ -22,6 +22,9 @@ const (
 	DegToRad  = math.Pi / 180
 	RadToGrad = 200 / math.Pi
 	GradToDeg = math.Pi / 200
+
+	Direction_Sunrise = 1.0
+	Direction_Sunset  = -1.0
 )
 
 // More time constants
@@ -36,8 +39,8 @@ const (
 	NAUTICAL_DUSK     = -12.0
 	CIVIL_DAWN        = -6.0
 	CIVIL_DUSK        = -6.0
-	SUNRISE           = 0
-	SUNSET            = 0
+	SUNRISE           = 0.0
+	SUNSET            = 0.0
 )
 
 // CalcJD converts a time.Time object to a julian date
@@ -239,23 +242,6 @@ func calcSunDeclination(t float64) float64 {
 	return RadToDeg * math.Asin(sint)
 }
 
-// Name:    calcHourAngleSunrise
-// Type:    Function
-// Purpose: calculate the hour angle of the sun at sunrise for the
-//			latitude
-//Arguments:
-//   lat : latitude of observer in degrees
-//	solarDec : declination angle of sun in degrees
-//Return value:
-//   hour angle of sunrise in radians
-
-func calcHourAngleSunrise(lat float64, solarDec float64, solarElevation float64) float64 {
-	latRad := DegToRad * lat
-	sdRad := DegToRad * solarDec
-	correction := calcRefractiveCorrection(solarElevation)
-	return (math.Acos(math.Cos(DegToRad*(90+correction))/(math.Cos(latRad)*math.Cos(sdRad)) - math.Tan(latRad)*math.Tan(sdRad)))
-}
-
 // Name:    calcSolNoonUTC
 // Type:    Function
 // Purpose: calculate the Universal Coordinated Time (UTC) of solar
@@ -276,21 +262,8 @@ func calcSolNoonUTC(t float64, longitude float64) float64 {
 	return 720 + (longitude * 4) - eqTime
 }
 
-// Name:    calcSunriseUTC
-// Type:    Function
-// Purpose: calculate the Universal Coordinated Time (UTC) of sunrise
-//			for the given day at the given location on earth
-// Arguments:
-//   JD  : julian day
-//   latitude : latitude of observer in degrees
-//   longitude : longitude of observer in degrees
-// Return value:
-//   time in minutes from zero Z
-
-// Calculate the UTC sunrise for the given day at the given location
-func calcSunriseUTC(jd float64, latitude float64, longitude float64, solarElevation float64) float64 {
+func calcTimeUTCWhenSunIsAtAngleFromHorizon(jd, latitude, longitude, solarElevation, direction float64) float64 {
 	longitude = longitude * -1
-
 	t := calcTimeJulianCent(jd)
 
 	// *** Find the time of solar noon at the location, and use
@@ -300,35 +273,36 @@ func calcSunriseUTC(jd float64, latitude float64, longitude float64, solarElevat
 	noonmin := calcSolNoonUTC(t, longitude)
 	tnoon := calcTimeJulianCent(jd + noonmin/1440.0)
 
-	// *** First pass to approximate sunrise (using solar noon)
+	// First calculates sunrise and approx length of day
 
 	eqTime := calcEquationOfTime(tnoon)
 	solarDec := calcSunDeclination(tnoon)
-	hourAngle := calcHourAngleSunrise(latitude, solarDec, solarElevation)
+	hourAngle := direction * calcHourAngleAtSolarElevation(latitude, solarDec, solarElevation)
 
 	delta := longitude - RadToDeg*hourAngle
 	timeDiff := 4 * delta
 	timeUTC := 720 + timeDiff - eqTime
 
-	// *** Second pass includes fractional jday in gamma calc
+	// first pass used to include fractional day in gamma calc
 
 	newt := calcTimeJulianCent(calcJDFromJulianCent(t) + timeUTC/1440.0)
 	eqTime = calcEquationOfTime(newt)
 	solarDec = calcSunDeclination(newt)
-	hourAngle = calcHourAngleSunrise(latitude, solarDec, solarElevation)
+	hourAngle = direction * calcHourAngleAtSolarElevation(latitude, solarDec, solarElevation)
+
 	delta = longitude - RadToDeg*hourAngle
 	timeDiff = 4 * delta
-	timeUTC = 720 + timeDiff - eqTime
-	return timeUTC
+	return 720 + timeDiff - eqTime
 }
 
 // CalcDawn calculates the dawn, in local time,  on the day t at the
 // location specified in longitude and latitude. If solarElevation is 0, then dawn is identical
 // to sunrise. A negative solarElevation specifies that the time calculated is for when the sun
 // is -solarElevation degrees below the horizon.
+
 func CalcDawn(t time.Time, latitude float64, longitude float64, solarElevation float64) time.Time {
 	jd := CalcJD(t)
-	sunriseUTC := time.Duration(math.Floor(calcSunriseUTC(jd, latitude, longitude, solarElevation)*60) * 1e9)
+	sunriseUTC := time.Duration(math.Floor(calcTimeUTCWhenSunIsAtAngleFromHorizon(jd, latitude, longitude, solarElevation, Direction_Sunrise)*60) * 1e9)
 	loc, _ := time.LoadLocation("UTC")
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc).Add(sunriseUTC).In(t.Location())
 }
@@ -361,59 +335,13 @@ func calcRefractiveCorrection(solarElevation float64) float64 {
 // Return value:
 //   hour angle of sunset in radians
 
-func calcHourAngleSunset(lat float64, solarDec float64, solarElevation float64) float64 {
+func calcHourAngleAtSolarElevation(lat, solarDec, solarElevation float64) float64 {
 	latRad := DegToRad * lat
 	sdRad := DegToRad * solarDec
 
 	correction := calcRefractiveCorrection(solarElevation)
 
-	HA := (math.Acos(math.Cos(DegToRad*(90+correction))/(math.Cos(latRad)*math.Cos(sdRad)) - math.Tan(latRad)*math.Tan(sdRad)))
-
-	return -HA // in radians
-}
-
-// Name:    calcSunsetUTC
-// Type:    Function
-// Purpose: calculate the Universal Coordinated Time (UTC) of sunset
-//			for the given day at the given location on earth
-//Arguments:
-//   JD  : julian day
-//   latitude : latitude of observer in degrees
-//   longitude : longitude of observer in degrees
-// Return value:
-//   time in minutes from zero Z
-
-func calcSunsetUTC(jd float64, latitude float64, longitude float64, solarElevation float64) float64 {
-	longitude = longitude * -1
-	t := calcTimeJulianCent(jd)
-
-	// *** Find the time of solar noon at the location, and use
-	//     that declination. This is better than start of the
-	//     Julian day
-
-	noonmin := calcSolNoonUTC(t, longitude)
-	tnoon := calcTimeJulianCent(jd + noonmin/1440.0)
-
-	// First calculates sunrise and approx length of day
-
-	eqTime := calcEquationOfTime(tnoon)
-	solarDec := calcSunDeclination(tnoon)
-	hourAngle := calcHourAngleSunset(latitude, solarDec, solarElevation)
-
-	delta := longitude - RadToDeg*hourAngle
-	timeDiff := 4 * delta
-	timeUTC := 720 + timeDiff - eqTime
-
-	// first pass used to include fractional day in gamma calc
-
-	newt := calcTimeJulianCent(calcJDFromJulianCent(t) + timeUTC/1440.0)
-	eqTime = calcEquationOfTime(newt)
-	solarDec = calcSunDeclination(newt)
-	hourAngle = calcHourAngleSunset(latitude, solarDec, solarElevation)
-
-	delta = longitude - RadToDeg*hourAngle
-	timeDiff = 4 * delta
-	return 720 + timeDiff - eqTime
+	return (math.Acos(math.Cos(DegToRad*(90+correction))/(math.Cos(latRad)*math.Cos(sdRad)) - math.Tan(latRad)*math.Tan(sdRad)))
 }
 
 // CalcDusk calculates the dusk, in local time,  on the day t at the
@@ -421,7 +349,7 @@ func calcSunsetUTC(jd float64, latitude float64, longitude float64, solarElevati
 // be -solarElevation degrees below the horizon.
 func CalcDusk(t time.Time, latitude float64, longitude float64, solarElevation float64) time.Time {
 	jd := CalcJD(t)
-	sunsetUTC := time.Duration(math.Floor(calcSunsetUTC(jd, latitude, longitude, solarElevation)*60) * 1e9)
+	sunsetUTC := time.Duration(math.Floor(calcTimeUTCWhenSunIsAtAngleFromHorizon(jd, latitude, longitude, solarElevation, Direction_Sunset)*60) * 1e9)
 	loc, _ := time.LoadLocation("UTC")
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc).Add(sunsetUTC).In(t.Location())
 }
@@ -432,38 +360,31 @@ func CalcSunset(t time.Time, latitude float64, longitude float64) time.Time {
 	return CalcDusk(t, latitude, longitude, SUNSET)
 }
 
-// NextSunrise returns date/time of the next sunrise after tAfter
-func NextSunrise(tAfter time.Time, latitude float64, longitude float64) (tSunrise time.Time) {
-	tSunrise = CalcSunrise(tAfter, latitude, longitude)
-	if tAfter.After(tSunrise) {
-		tSunrise = CalcSunrise(tAfter.Add(OneDay), latitude, longitude)
+// Calculates Next XX for function XX
+func NextWhatever(tAfter time.Time, latitude, longitude, solarElevation float64, what func(time.Time, float64, float64, float64) time.Time) (tresult time.Time) {
+	tresult = what(tAfter, latitude, longitude, solarElevation)
+	if tAfter.After(tresult) {
+		tresult = what(tAfter.Add(OneDay), latitude, longitude, solarElevation)
 	}
 	return
+}
+
+// NextSunrise returns date/time of the next sunrise after tAfter
+func NextSunrise(tAfter time.Time, latitude float64, longitude float64) (tSunrise time.Time) {
+	return NextWhatever(tAfter, latitude, longitude, SUNRISE, CalcDawn)
 }
 
 // NextDawn returns date/time of the next dawn at the specified solar solarElevation, after the specified time.
 func NextDawn(tAfter time.Time, latitude float64, longitude float64, solarElevation float64) (tSunrise time.Time) {
-	tSunrise = CalcDawn(tAfter, latitude, longitude, solarElevation)
-	if tAfter.After(tSunrise) {
-		tSunrise = CalcDawn(tAfter.Add(OneDay), latitude, longitude, solarElevation)
-	}
-	return
+	return NextWhatever(tAfter, latitude, longitude, solarElevation, CalcDawn)
 }
 
 // NextSunset returns date/time of the next sunset after tAfter
 func NextSunset(tAfter time.Time, latitude float64, longitude float64) (tSunset time.Time) {
-	tSunset = CalcSunset(tAfter, latitude, longitude)
-	if tAfter.After(tSunset) {
-		tSunset = CalcSunset(tAfter.Add(OneDay), latitude, longitude)
-	}
-	return
+	return NextWhatever(tAfter, latitude, longitude, SUNSET, CalcDusk)
 }
 
 // NextDusk returns date/time of the next dusk at the specified solar solarElevation, after the specified tine.
 func NextDusk(tAfter time.Time, latitude float64, longitude float64, solarElevation float64) (tSunset time.Time) {
-	tSunset = CalcDusk(tAfter, latitude, longitude, solarElevation)
-	if tAfter.After(tSunset) {
-		tSunset = CalcDusk(tAfter.Add(OneDay), latitude, longitude, solarElevation)
-	}
-	return
+	return NextWhatever(tAfter, latitude, longitude, solarElevation, CalcDusk)
 }
