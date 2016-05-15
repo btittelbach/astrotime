@@ -33,14 +33,16 @@ const (
 )
 
 const (
-	ASTRONOMICAL_DAWN = -18.0
-	ASTRONOMICAL_DUSK = -18.0
-	NAUTICAL_DAWN     = -12.0
-	NAUTICAL_DUSK     = -12.0
-	CIVIL_DAWN        = -6.0
-	CIVIL_DUSK        = -6.0
-	SUNRISE           = 0.0
-	SUNSET            = 0.0
+	ASTRONOMICAL_DAWN  = -18.0
+	ASTRONOMICAL_DUSK  = -18.0
+	NAUTICAL_DAWN      = -12.0
+	NAUTICAL_DUSK      = -12.0
+	CIVIL_DAWN         = -6.0
+	CIVIL_DUSK         = -6.0
+	SUNRISE            = 0.0
+	SUNSET             = 0.0
+	GOLDEN_HOUR        = 6.0
+	CITY_INDOOR_LIGHTS = 12.0 // time when you likely need to switch on the first electrical lights
 )
 
 // CalcJD converts a time.Time object to a julian date

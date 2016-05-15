@@ -3,19 +3,38 @@
 
 NOAA astrological algorithms for sunrise and sunset ported to Go
 
+## Conveniance Functions
 
-## Functions
+- `func CalcSunrise(t time.Time, latitude float64, longitude float64) time.Time` calculates the sunrise, in local time, on the day t at the location specified in longitude and latitude.
+- `func NextSunrise(tAfter time.Time, latitude float64, longitude float64) (tSunrise time.Time)` returns date/time of the next sunrise after tAfter
+- `func CalcSunset(t time.Time, latitude float64, longitude float64) time.Time` calculates the sunset, in local time,  on the day t at the location specified in longitude and latitude.
+- `func NextSunset(tAfter time.Time, latitude float64, longitude float64) (tSunset time.Time)` returns date/time of the next sunset after tAfter
 
-- `func CalcSunrise(t time.Time, latitude float64, longitude float64) time.Time` calculates the sunrise, in local time, on the day t at the location specified in longitude and latitude.  
-- `func NextSunrise(tAfter time.Time, latitude float64, longitude float64) (tSunrise time.Time)` returns date/time of the next sunrise after tAfter  
-- `func CalcSunset(t time.Time, latitude float64, longitude float64) time.Time` calculates the sunset, in local time,  on the day t at the location specified in longitude and latitude.  
-- `func NextSunset(tAfter time.Time, latitude float64, longitude float64) (tSunset time.Time)` returns date/time of the next sunset after tAfter  
+## Core Functions
+
+- `func CalcDawn(t time.Time, latitude float64, longitude float64, solarElevation float64) time.Time` calculates Dawn or Sunrise (depending on solarElevation given), in local time, on the day t at the location specified in longitude and latitude.
+- `func CalcDusk(t time.Time, latitude float64, longitude float64, solarElevation float64) time.Time` calculates Dusk or Sunset (depending on solarElevation given), in local time, on the day t at the location specified in longitude and latitude.
+- `func NextDawn(tAfter time.Time, latitude float64, longitude float64, solarElevation float64) (tSunrise time.Time)` returns date/time of
+the specified solarElevation before Sunrise after tAfter
+- `func NextDusk(tAfter time.Time, latitude float64, longitude float64, solarElevation float64) (tSunrise time.Time)` returns date/time of the specified solarElevation after Sunset after tAfter.
+
+## Predefined Solar Elevations
+
+- `ASTRONOMICAL_DAWN`
+- `ASTRONOMICAL_DUSK´
+- `NAUTICAL_DAWN`
+- `NAUTICAL_DUSK`
+- `CIVIL_DAWN`
+- `CIVIL_DUSK`
+- `SUNRISE`
+- `SUNSET`
+- `GOLDEN_HOUR`
 
 
 ## Install
 
 ``` sh
-go get -u github.com/0rph3us/astrotime
+go get -u github.com/btittelbach/astrotime
 ```
 
 ## Example
