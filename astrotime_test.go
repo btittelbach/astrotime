@@ -49,12 +49,12 @@ var (
 	JULY     = "2015-07-01"
 	MINUTE   = time.Minute
 	DATA     = []*test{
-		&test{times{NOVEMBER, "05:55", "19:23", "05:29", "19:49"}, SYDNEY, MINUTE},
-		&test{times{NOVEMBER, "07:07", "15:55", "06:23", "16:39"}, STOCKHOLM, MINUTE},
-		&test{times{NOVEMBER, "07:26", "17:52", "06:58", "18:21"}, NEWYORK, MINUTE},
-		&test{times{JULY, "07:01", "16:57", "06:33", "17:25"}, SYDNEY, MINUTE},
-		&test{times{JULY, "03:37", "22:06", "02:09", "23:33"}, STOCKHOLM, MINUTE},
-		&test{times{JULY, "05:29", "20:31", "04:55", "21:04"}, NEWYORK, MINUTE},
+		{times{NOVEMBER, "05:55", "19:23", "05:29", "19:49"}, SYDNEY, MINUTE},
+		{times{NOVEMBER, "07:07", "15:55", "06:23", "16:39"}, STOCKHOLM, MINUTE},
+		{times{NOVEMBER, "07:26", "17:52", "06:58", "18:21"}, NEWYORK, MINUTE},
+		{times{JULY, "07:01", "16:57", "06:33", "17:25"}, SYDNEY, MINUTE},
+		{times{JULY, "03:37", "22:06", "02:09", "23:33"}, STOCKHOLM, MINUTE},
+		{times{JULY, "05:29", "20:31", "04:55", "21:04"}, NEWYORK, MINUTE},
 	}
 )
 
